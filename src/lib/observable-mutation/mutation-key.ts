@@ -3,7 +3,14 @@ export type MutationKey<TInput>
     | [unknown, ...unknown[]]
     | ((input: TInput | undefined) => [unknown, ...unknown[]]);
 
-export function getMutationKey<TInput>(keyOrFactory: MutationKey<TInput>, input: TInput | undefined): [unknown, ...unknown[]] {
+export function getMutationKey<TInput>(
+  keyOrFactory: MutationKey<TInput> | undefined,
+  input: TInput | undefined,
+): undefined | [unknown, ...unknown[]] {
+  if (!keyOrFactory) {
+    return undefined;
+  }
+
   if (typeof keyOrFactory === 'string') {
     return [keyOrFactory];
   }
@@ -16,5 +23,5 @@ export function getMutationKey<TInput>(keyOrFactory: MutationKey<TInput>, input:
     return keyOrFactory(input);
   }
 
-  return [''];
+  return undefined;
 }

@@ -1,4 +1,4 @@
-import { Observable, of } from 'rxjs';
+import { filter, map, Observable, of } from 'rxjs';
 import {
   MutationObserver,
   MutationObserverResult,
@@ -15,7 +15,7 @@ type DefaultError = Error;
 
 
 export interface ObservableMutationOptions<TInput = void, TOutput = unknown> {
-  mutationKey: MutationKey<TInput>;
+  mutationKey?: MutationKey<TInput>;
   mutationFn: (input: TInput) => Promise<TOutput>;
 
   queryClient?: QueryClient;
@@ -32,6 +32,10 @@ export class ObservableMutation<TInput = void, TOutput = unknown> {
 
   private executedMutationResult$: Observable<MutationObserverResult<TOutput, DefaultError, TInput>> | undefined = undefined;
 
+  protected get queryClient() {
+    return this.options?.queryClient ?? getQueryClient();
+  }
+
   private get optimisticMutationResult$(): Observable<MutationObserverResult<TOutput, DefaultError, TInput>> {
     return of(
       this.getCurrentResult(),
@@ -46,8 +50,31 @@ export class ObservableMutation<TInput = void, TOutput = unknown> {
     return this.optimisticMutationResult$;
   }
 
-  protected get queryClient() {
-    return this.options?.queryClient ?? getQueryClient();
+  public get data$(): Observable<TOutput> {
+    return this.mutation$.pipe(
+      map((result) => result.data),
+      filter((data) => data !== undefined),
+    );
+  }
+
+  public get isPending$(): Observable<boolean> {
+    return this.mutation$.pipe(
+      map((result) => result.isPending),
+    );
+  }
+
+  public get succeed$(): Observable<TOutput> {
+    return this.mutation$.pipe(
+      filter((result) => result.isSuccess),
+      map((result) => result.data),
+    );
+  }
+
+  public get failed$(): Observable<DefaultError> {
+    return this.mutation$.pipe(
+      filter((result) => result.isError),
+      map((result) => result.error),
+    );
   }
 
   constructor(
@@ -69,6 +96,7 @@ export class ObservableMutation<TInput = void, TOutput = unknown> {
     this.executedMutationResult$ = new Observable<MutationObserverResult<TOutput, DefaultError, TInput>>((observer) => {
       const unsubscribe = this.mutationObserver.subscribe((result) => {
         observer.next(result);
+        observer.complete();
       });
 
       return () => {

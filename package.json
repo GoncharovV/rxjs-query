@@ -1,5 +1,5 @@
 {
-  "name": "rxjs-query",
+  "name": "@goncharovv/rxjs-observable-query",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",

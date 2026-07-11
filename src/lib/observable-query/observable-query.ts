@@ -1,4 +1,4 @@
-import { filter, map, Observable, of } from 'rxjs';
+import { filter, map, Observable, of, shareReplay } from 'rxjs';
 import {
   DefaultedQueryObserverOptions,
   NotifyOnChangeProps,
@@ -128,7 +128,9 @@ export class ObservableQuery<
       return () => {
         unsubscribe();
       };
-    });
+    }).pipe(
+      shareReplay(),
+    );
 
     return this.executedQueryResult$;
   }

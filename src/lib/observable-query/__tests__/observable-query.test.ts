@@ -60,7 +60,6 @@ describe('Observable Query', () => {
     const queryFn = vi.fn(async (_: { input: string; }) => Promise.resolve({ result: 'nested' }));
     const onDataChanged = vi.fn();
 
-
     const query$ = new ObservableQuery({
       queryKey,
       queryFn,
@@ -74,5 +73,24 @@ describe('Observable Query', () => {
     await lastValueFrom(query$);
 
     expect(onDataChanged).toHaveBeenLastCalledWith(expect.objectContaining({ data: 'nested' }));
+  });
+
+  test('new subscriber receives the latest query result', async () => {
+    const queryFn = vi.fn(async (_: { input: string; }) => Promise.resolve({ data: true }));
+
+    const query$ = new ObservableQuery({ queryKey, queryFn }).fetchQuery({ input: 'test' });
+
+    query$.subscribe();
+
+    // emulate delay between subscribing
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const onReceive = vi.fn();
+
+    query$.subscribe(onReceive);
+
+    expect(onReceive).toHaveBeenLastCalledWith(
+      expect.objectContaining({ data: { data: true } }),
+    );
   });
 });

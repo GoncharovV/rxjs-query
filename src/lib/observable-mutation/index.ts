@@ -1,2 +1,2 @@
+export * from './mutation-key';
 export * from './observable-mutation';
-export * from './observable-query';
